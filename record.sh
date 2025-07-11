@@ -15,44 +15,42 @@ fi
 
 # Find next available letter a-z for today's date
 for letter in {a..z}; do
-  VIDEO_RAW="$OUTPUT_DIR/source_${DATE}_${letter}.mp4"
-  AUDIO_RAW="$OUTPUT_DIR/source_${DATE}_${letter}.wav"
-  OUTPUT_COMBINED="$OUTPUT_DIR/combined_${DATE}_${letter}.mp4"
-  if [[ ! -f "$VIDEO_RAW" && ! -f "$AUDIO_RAW" && ! -f "$OUTPUT_COMBINED" ]]; then
+  VIDEO_FILE="$OUTPUT_DIR/video_${DATE}_${letter}.mp4"
+  AUDIO_FILE="$OUTPUT_DIR/audio_${DATE}_${letter}.wav"
+  COMBINED_FILE="$OUTPUT_DIR/combined_${DATE}_${letter}.mp4"
+  if [[ ! -f "$VIDEO_FILE" && ! -f "$AUDIO_FILE" && ! -f "$COMBINED_FILE" ]]; then
     break
   fi
 done
 
-if [[ -f "$VIDEO_RAW" || -f "$AUDIO_RAW" || -f "$OUTPUT_COMBINED" ]]; then
-  echo "All letter slots (a–z) are used for today. Please clean up files or try again tomorrow."
+if [[ -f "$VIDEO_FILE" || -f "$AUDIO_FILE" || -f "$COMBINED_FILE" ]]; then
+  echo "All letter slots (a-z) are used for today. Please clean up files or try again tomorrow."
   exit 1
 fi
 
-echo "Using mic source: $MIC_SOURCE"
-echo "Recording video to: $VIDEO_RAW"
-echo "Recording audio to: $AUDIO_RAW"
-echo "Final merged output: $OUTPUT_COMBINED"
+echo "Recording video to: $VIDEO_FILE"
+echo "Recording audio from mic source: $MIC_SOURCE"
+echo "Saving audio to: $AUDIO_FILE"
+echo "Combined file will be: $COMBINED_FILE"
 echo "Press Ctrl+C to stop recording."
 
 # Start recording mic audio in background
-parecord --device="$MIC_SOURCE" "$AUDIO_RAW" &
+parecord --device="$MIC_SOURCE" "$AUDIO_FILE" &
 MIC_PID=$!
 
 # Start recording screen video (no audio)
-wf-recorder -f "$VIDEO_RAW"
+wf-recorder -f "$VIDEO_FILE"
 
 # When wf-recorder ends (Ctrl+C), kill parecord
 kill $MIC_PID
-
-# Wait for parecord to stop fully
 wait $MIC_PID 2>/dev/null
 
 echo "Recording stopped, merging audio and video now..."
 
 # Merge audio + video into final file
-ffmpeg -y -i "$VIDEO_RAW" -i "$AUDIO_RAW" -c:v copy -c:a aac -strict experimental "$OUTPUT_COMBINED"
+ffmpeg -y -i "$VIDEO_FILE" -i "$AUDIO_FILE" -c:v copy -c:a aac -strict experimental "$COMBINED_FILE"
 
 echo "Done!"
-echo "Raw video: $VIDEO_RAW"
-echo "Raw audio: $AUDIO_RAW"
-echo "Combined file: $OUTPUT_COMBINED"
+echo "Raw video: $VIDEO_FILE"
+echo "Raw audio: $AUDIO_FILE"
+echo "Combined file: $COMBINED_FILE"
