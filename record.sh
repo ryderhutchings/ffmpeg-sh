@@ -6,7 +6,7 @@ mkdir -p "$OUTPUT_DIR"
 DATE=$(date +"%Y%m%d")
 
 # Find PreSonus Revelator mic source ending with .analog-surround-21
-MIC_SOURCE=$(pactl list sources short | grep 'PreSonus_Revelator' | grep 'analog-surround-21' | awk '{print $2}')
+MIC_SOURCE=$(pactl list sources short | grep 'alsa_input.*PreSonus_Revelator.*analog-surround-21' | awk '{print $2}')
 
 if [[ -z "$MIC_SOURCE" ]]; then
   echo "Error: Could not find PreSonus Revelator mic input source."
