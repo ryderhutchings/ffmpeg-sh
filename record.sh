@@ -5,7 +5,7 @@ mkdir -p "$OUTPUT_DIR"
 
 DATE=$(date +"%Y%m%d")
 
-# Find the next available letter a-z for today
+# Find the next available letter a-z for today's date
 for letter in {a..z}; do
   VIDEO_FILE="$OUTPUT_DIR/output_${DATE}_${letter}.mp4"
   AUDIO_FILE="$OUTPUT_DIR/audio_${DATE}_${letter}.wav"
@@ -14,19 +14,20 @@ for letter in {a..z}; do
   fi
 done
 
+# Exit if all letters are taken
 if [[ -f "$VIDEO_FILE" || -f "$AUDIO_FILE" ]]; then
-  echo "All letters a-z are taken for today. Please delete some files or wait for tomorrow."
+  echo "All letter slots (a–z) are used for today. Clean up files or try again tomorrow."
   exit 1
 fi
 
-echo "Recording to:"
-echo "Video: $VIDEO_FILE"
-echo "Audio: $AUDIO_FILE"
+echo "Recording to: $VIDEO_FILE"
+echo "Audio will be saved to: $AUDIO_FILE"
+echo "Press Ctrl+C to stop recording."
 
-ffmpeg -video_size 1920x1080 -framerate 60 -f x11grab -i :0.0 \
--f alsa -i default \
--c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p \
--c:a aac -b:a 128k \
--map 0:v -map 1:a \
-"$VIDEO_FILE" \
--map 1:a "$AUDIO_FILE"
+# Record screen and mic audio
+wf-recorder -a -f "$VIDEO_FILE"
+
+# Extract mic audio as separate WAV
+ffmpeg -i "$VIDEO_FILE" -vn "$AUDIO_FILE"
+
+echo "Recording complete."
